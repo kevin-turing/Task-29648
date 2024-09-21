@@ -1,1 +1,107 @@
-T1MB
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Labyrinth of Reflections</title>
+<style>
+    body { font-family: 'Arial', sans-serif; background-color: #000; color: #fff; }
+    #game { width: 500px; margin: 0 auto; text-align: center; }
+    #maze { border: 2px solid #fff; margin-top: 20px; }
+    .cell { width: 50px; height: 50px; display: inline-block; line-height: 50px; font-size: 20px; }
+    .mirror { background-color: #555; }
+    .player { color: #FFD700; }
+    .shard { color: #00FFFF; }
+    .trap { color: #FF4500; }
+    #status { margin-top: 10px; }
+</style>
+</head>
+<body>
+<div id="game">
+    <h1>🌀 Labyrinth of Reflections 🌀</h1>
+    <div id="status">
+        <span>Clarity: <span id="clarity">100</span>%</span> | 
+        <span>Shards: <span id="shards">0</span>/4</span> | 
+        <span>Vision Mode: <span id="visionMode">Normal</span></span>
+    </div>
+    <div id="maze"></div>
+</div>
+<script>
+document.addEventListener('keydown', movePlayer);
+
+const maze = Array(10).fill().map(() => Array(10).fill(''));
+let player = {x: 0, y: 0};
+let shardsCollected = 0;
+let clarity = 100;
+let visionMode = 'Normal';
+const mirrors = [{x: 3, y: 3}, {x: 7, y: 7}];
+const traps = [{x: 1, y: 5}, {x: 5, y: 1}, {x: 8, y: 8}, {x: 2, y: 2}, {x: 4, y: 7}, {x: 6, y: 6}];
+const shardPositions = [{x: 9, y: 0}, {x: 0, y: 9}, {x: 9, y: 9}, {x: 5, y: 5}];
+
+function initializeMaze() {
+    for(let i = 0; i < 10; i++) {
+        for(let j = 0; j < 10; j++) {
+            if(mirrors.some(m => m.x === j && m.y === i)) maze[i][j] = '🔲';
+            if(traps.some(t => t.x === j && t.y === i)) maze[i][j] = ' ';
+            if(shardPositions.some(s => s.x === j && s.y === i)) maze[i][j] = '💎';
+        }
+    }
+    maze[player.y][player.x] = '👤';
+    updateMazeDisplay();
+}
+
+function updateMazeDisplay() {
+    const mazeDiv = document.getElementById('maze');
+    mazeDiv.innerHTML = maze.map(row => row.map(cell => `<div class="cell ${cell === '🔲' ? 'mirror' : ''}">${cell}</div>`).join('')).join('');
+    document.getElementById('clarity').textContent = clarity;
+    document.getElementById('shards').textContent = shardsCollected;
+    document.getElementById('visionMode').textContent = visionMode;
+}
+
+function movePlayer(e) {
+    const key = e.key;
+    let newX = player.x, newY = player.y;
+
+    if(key === 'ArrowUp') newY--;
+    else if(key === 'ArrowDown') newY++;
+    else if(key === 'ArrowLeft') newX--;
+    else if(key === 'ArrowRight') newX++;
+
+    if(newX >= 0 && newX < 10 && newY >= 0 && newY < 10) {
+        if(maze[newY][newX] === '💎') {
+            shardsCollected++;
+            maze[newY][newX] = ' ';
+        } else if(traps.some(t => t.x === newX && t.y === newY)) {
+            clarity -= 10;
+            if(clarity < 0) clarity = 0;
+            // Here you could implement control reversal or other trap effects
+        }
+
+        maze[player.y][player.x] = ' ';
+        player.x = newX;
+        player.y = newY;
+        maze[player.y][player.x] = '👤';
+        updateMazeDisplay();
+
+        if(shardsCollected === 4 && player.x === 9 && player.y === 9) {
+            alert("You've restored clarity and escaped the labyrinth! Congratulations!");
+        }
+    }
+}
+
+function useRefraction() {
+    if(visionMode === 'Normal' && clarity >= 20) {
+        visionMode = 'Refraction';
+        clarity -= 20;
+        // Implement logic to reveal illusions or change maze perspective
+        setTimeout(() => {
+            visionMode = 'Normal';
+            updateMazeDisplay();
+        }, 5000); // Refraction lasts for 5 seconds
+    }
+}
+
+// Initialize the game
+initializeMaze();
+</script>
+</body>
+</html>

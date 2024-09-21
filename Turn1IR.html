@@ -1,1 +1,289 @@
-T1IR
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mystical Labyrinth of Reflections</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Raleway:wght@400;600&display=swap');
+
+        body {
+            background-color: #1e2a3a;
+            color: #e0e6ed;
+            font-family: 'Raleway', sans-serif;
+        }
+        #gameBoard {
+            display: grid;
+            grid-template-columns: repeat(10, 45px);
+            gap: 3px;
+            margin: 20px auto;
+            max-width: 480px;
+            padding: 10px;
+            background: rgba(48, 71, 94, 0.3);
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(79, 172, 254, 0.1);
+        }
+        .cell {
+            width: 45px;
+            height: 45px;
+            background: #30475e;
+            border: 1px solid #4f7cac;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            transition: all 0.3s ease;
+            border-radius: 8px;
+        }
+        .player { 
+            color: #79d70f; 
+            text-shadow: 0 0 5px #79d70f;
+        }
+        .shard { 
+            color: #ff85a2; 
+            text-shadow: 0 0 5px #ff85a2;
+        }
+        .mirror { 
+            background: #4f7cac; 
+            box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+        .trap { 
+            background: #d9534f; 
+            opacity: 0.7; 
+        }
+        #ui {
+            background-color: #30475e;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 0 15px rgba(79, 172, 254, 0.2);
+        }
+        #gameTitle {
+            font-family: 'Cinzel', serif;
+            font-size: 2.8rem;
+            text-align: center;
+            margin: 30px 0;
+            color: #79d70f;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        .btn-custom {
+            background-color: #4f7cac;
+            border-color: #4f7cac;
+            color: #fff;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+        .btn-custom:hover {
+            background-color: #6a93bf;
+            border-color: #6a93bf;
+            color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .badge {
+            font-size: 1rem;
+            padding: 8px 12px;
+            border-radius: 20px;
+        }
+        #controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            max-width: 200px;
+            margin: 0 auto;
+        }
+        #controls button {
+            font-size: 1.5rem;
+            padding: 10px;
+        }
+        #btnUp { grid-column: 2; }
+        #btnLeft { grid-column: 1; grid-row: 2; }
+        #btnDown { grid-column: 2; grid-row: 2; }
+        #btnRight { grid-column: 3; grid-row: 2; }
+        #btnRefraction {
+            grid-column: 1 / span 3;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1 id="gameTitle">🌿 Mystical Labyrinth 🌿</h1>
+    <div id="gameBoard"></div>
+    <div id="ui" class="text-center">
+        <div class="row mb-4">
+            <div class="col-md-4">
+                Clarity: <span id="clarity" class="badge bg-info">100</span>%
+            </div>
+            <div class="col-md-4">
+                Shards: <span id="shards" class="badge bg-success">0</span>/6
+            </div>
+            <div class="col-md-4">
+                Vision: <span id="vision" class="badge bg-warning">Normal</span>
+            </div>
+        </div>
+        <div id="controls">
+            <button id="btnUp" class="btn btn-custom">⬆️</button>
+            <button id="btnLeft" class="btn btn-custom">⬅️</button>
+            <button id="btnDown" class="btn btn-custom">⬇️</button>
+            <button id="btnRight" class="btn btn-custom">➡️</button>
+            <button id="btnRefraction" class="btn btn-custom">🔮 Use Refraction</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const board = document.getElementById('gameBoard');
+    let playerPos = {x: 0, y: 0};
+    let maze = [];
+    const size = 10;
+    let clarity = 100;
+    let shardsCollected = 0;
+    let visionMode = 'Normal';
+    let controlsReversed = false;
+
+    function initBoard() {
+        for(let i = 0; i < size; i++) {
+            maze[i] = [];
+            for(let j = 0; j < size; j++) {
+                let cell = document.createElement('div');
+                cell.className = 'cell';
+                board.appendChild(cell);
+                maze[i][j] = {type: 'empty'};
+            }
+        }
+        setupGameElements();
+    }
+
+    function setupGameElements() {
+        ['mirror', 'mirror', 'mirror', 'shard', 'shard', 'shard', 'shard', 'shard', 'shard', 'trap', 'trap', 'trap', 'trap'].forEach(item => {
+            let x, y;
+            do {
+                x = Math.floor(Math.random() * size);
+                y = Math.floor(Math.random() * size);
+            } while (maze[x][y].type !== 'empty' || (x === playerPos.x && y === playerPos.y));
+            maze[x][y].type = item;
+        });
+        updateBoard();
+    }
+
+    function updateBoard() {
+        for(let i = 0; i < size; i++) {
+            for(let j = 0; j < size; j++) {
+                let cell = board.children[i * size + j];
+                cell.textContent = '';
+                switch(maze[i][j].type) {
+                    case 'shard': cell.textContent = '💎'; cell.className = 'cell shard'; break;
+                    case 'mirror': cell.textContent = '🪞'; cell.className = 'cell mirror'; break;
+                    case 'trap': cell.textContent = ''; cell.className = 'cell trap'; break;
+                    default: cell.className = 'cell';
+                }
+            }
+        }
+        board.children[playerPos.y * size + playerPos.x].textContent = '🧙';
+        board.children[playerPos.y * size + playerPos.x].classList.add('player');
+    }
+
+    function movePlayer(dx, dy) {
+        const newX = playerPos.x + dx;
+        const newY = playerPos.y + dy;
+        if(newX >= 0 && newX < size && newY >= 0 && newY < size) {
+            playerPos.x = newX;
+            playerPos.y = newY;
+            checkPosition();
+            updateBoard();
+        }
+    }
+
+    function checkPosition() {
+        let currentCell = maze[playerPos.y][playerPos.x];
+        if(currentCell.type === 'shard') {
+            shardsCollected++;
+            document.getElementById('shards').textContent = shardsCollected;
+            currentCell.type = 'empty';
+            if(shardsCollected === 6) {
+                alert('Congratulations! You restored clarity and escaped the mystical labyrinth!');
+                resetGame();
+            }
+        } else if(currentCell.type === 'trap') {
+            clarity = Math.max(clarity - 10, 0);
+            document.getElementById('clarity').textContent = clarity;
+            reverseControls();
+        }
+    }
+
+    function reverseControls() {
+        controlsReversed = true;
+        document.getElementById('vision').textContent = 'Reversed';
+        document.getElementById('vision').className = 'badge bg-danger';
+        setTimeout(() => {
+            controlsReversed = false;
+            document.getElementById('vision').textContent = 'Normal';
+            document.getElementById('vision').className = 'badge bg-warning';
+        }, 5000);
+    }
+
+    function useRefraction() {
+        if(clarity >= 20) {
+            clarity -= 20;
+            document.getElementById('clarity').textContent = clarity;
+            visionMode = 'Refraction';
+            document.getElementById('vision').textContent = visionMode;
+            document.getElementById('vision').className = 'badge bg-primary';
+            revealTraps();
+            setTimeout(() => {
+                visionMode = 'Normal';
+                document.getElementById('vision').textContent = visionMode;
+                document.getElementById('vision').className = 'badge bg-warning';
+                updateBoard();
+            }, 5000);
+        }
+    }
+
+    function revealTraps() {
+        for(let i = 0; i < size; i++) {
+            for(let j = 0; j < size; j++) {
+                if(maze[i][j].type === 'trap') {
+                    board.children[i * size + j].textContent = '⚠️';
+                }
+            }
+        }
+    }
+
+    function resetGame() {
+        playerPos = {x: 0, y: 0};
+        clarity = 100;
+        shardsCollected = 0;
+        visionMode = 'Normal';
+        controlsReversed = false;
+        document.getElementById('clarity').textContent = clarity;
+        document.getElementById('shards').textContent = shardsCollected;
+        document.getElementById('vision').textContent = visionMode;
+        document.getElementById('vision').className = 'badge bg-warning';
+        maze = [];
+        initBoard();
+    }
+
+    initBoard();
+
+    document.getElementById('btnUp').addEventListener('click', () => movePlayer(0, controlsReversed ? 1 : -1));
+    document.getElementById('btnDown').addEventListener('click', () => movePlayer(0, controlsReversed ? -1 : 1));
+    document.getElementById('btnLeft').addEventListener('click', () => movePlayer(controlsReversed ? 1 : -1, 0));
+    document.getElementById('btnRight').addEventListener('click', () => movePlayer(controlsReversed ? -1 : 1, 0));
+    document.getElementById('btnRefraction').addEventListener('click', useRefraction);
+
+    document.addEventListener('keydown', (e) => {
+        switch(e.key) {
+            case 'ArrowUp': movePlayer(0, controlsReversed ? 1 : -1); break;
+            case 'ArrowDown': movePlayer(0, controlsReversed ? -1 : 1); break;
+            case 'ArrowLeft': movePlayer(controlsReversed ? 1 : -1, 0); break;
+            case 'ArrowRight': movePlayer(controlsReversed ? -1 : 1, 0); break;
+            case 'r': useRefraction(); break;
+        }
+    });
+</script>
+
+</body>
+</html>
