@@ -145,6 +145,7 @@
     let controlsReversed = false;
 
     function initBoard() {
+        board.innerHTML = ''; // Clear the existing board
         for(let i = 0; i < size; i++) {
             maze[i] = [];
             for(let j = 0; j < size; j++) {
